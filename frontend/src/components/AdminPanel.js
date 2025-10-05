@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Table, Button, Badge, Alert, Form, Modal, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useBlockchain } from '../utils/BlockchainContext';
-import { grantRole, revokeRole, getAllBatches } from '../utils/blockchain';
+import { grantRole, revokeRole, getAllBatches } from '../utils/blockchain-clean';
 import { toast } from 'react-toastify';
 
 /**

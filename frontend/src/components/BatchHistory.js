@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Badge, Alert, Spinner, Button } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useBlockchain } from '../utils/BlockchainContext';
-import { getBatchHistory } from '../utils/blockchain';
+import { getBatchHistory } from '../utils/blockchain-clean';
 
 /**
  * Batch History Component

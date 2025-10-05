@@ -1,229 +1,87 @@
 // frontend/src/utils/blockchain.js
 import { ethers } from 'ethers';
+import { CONTRACT_ABI as COMPLETE_ABI } from './config.js';
 
 console.log('🔧 [BLOCKCHAIN] Loading clean blockchain module...');
 
 // Contract configuration
 export const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
 
-// Minimal ABI for testing
-export const CONTRACT_ABI = [
-  {
-    "inputs": [],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "batchId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "actor",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "eventType",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "details",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "temperature",
-        "type": "int256"
-      }
-    ],
-    "name": "BatchEventLog",
-    "type": "event"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_productName",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_additionalDetails",
-        "type": "string"
-      }
-    ],
-    "name": "createBatch",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "batches",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "batchId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint64",
-        "name": "creationTimestamp",
-        "type": "uint64"
-      },
-      {
-        "internalType": "address",
-        "name": "processor",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "isCompromised",
-        "type": "bool"
-      },
-      {
-        "internalType": "enum Traceability.BatchStatus",
-        "name": "status",
-        "type": "uint8"
-      },
-      {
-        "internalType": "address",
-        "name": "currentOwner",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "role",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "hasRole",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "DEFAULT_ADMIN_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "PROCESSOR_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "DISTRIBUTOR_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "RETAILER_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
+// Use complete ABI from config.js for full functionality
+export const CONTRACT_ABI = COMPLETE_ABI;
 
 // Role constants
 export const ROLES = {
   ADMIN_ROLE: "0x0000000000000000000000000000000000000000000000000000000000000000",
   PROCESSOR_ROLE: ethers.id("PROCESSOR_ROLE"),
   DISTRIBUTOR_ROLE: ethers.id("DISTRIBUTOR_ROLE"),
-  RETAILER_ROLE: ethers.id("RETAILER_ROLE")
+  RETAILER_ROLE: ethers.id("RETAILER_ROLE"),
+  ORACLE_ROLE: ethers.id("ORACLE_ROLE")
 };
 
-// Connect to wallet
+// Provider and contract instance
+let provider;
+let contract;
+
+/**
+ * Initialize blockchain connection
+ */
+export const initializeProvider = async () => {
+  try {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      throw new Error('MetaMask not found');
+    }
+
+    provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    
+    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    
+    console.log('✅ [PROVIDER] Blockchain provider initialized');
+    return { provider, contract };
+  } catch (error) {
+    console.error('❌ [PROVIDER] Failed to initialize provider:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get provider instance
+ */
+export const getProvider = () => provider;
+
+/**
+ * Get contract instance
+ */
+export const getContract = () => contract;
+
+/**
+ * Format Ethereum address for display
+ */
+export const formatAddress = (address) => {
+  if (!address) return '';
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
+/**
+ * Connect to MetaMask wallet
+ */
 export const connectWallet = async () => {
   console.log('🔗 [BLOCKCHAIN] Starting wallet connection...');
   
-  if (!window.ethereum) {
-    console.error('❌ [BLOCKCHAIN] MetaMask not detected');
-    throw new Error('MetaMask is not installed');
-  }
-  
-  console.log('✅ [BLOCKCHAIN] MetaMask detected');
-
   try {
+    if (!window.ethereum) {
+      throw new Error('MetaMask not installed');
+    }
+    
+    console.log('✅ [BLOCKCHAIN] MetaMask detected');
+    
+    // Request account access
     console.log('📝 [BLOCKCHAIN] Requesting account access...');
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const accounts = await window.ethereum.request({ 
+      method: 'eth_requestAccounts' 
+    });
+    
     console.log('✅ [BLOCKCHAIN] Account access granted');
     
     // Check network
@@ -235,6 +93,7 @@ export const connectWallet = async () => {
       console.warn('⚠️ [BLOCKCHAIN] Wrong network! Please switch to Localhost 8545');
     }
     
+    // Create provider and signer
     console.log('🔧 [BLOCKCHAIN] Creating provider and signer...');
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
@@ -242,45 +101,184 @@ export const connectWallet = async () => {
     
     console.log('✅ [BLOCKCHAIN] Wallet connected successfully');
     console.log('👤 [BLOCKCHAIN] Account:', account);
-
-    return { provider, signer, account };
+    
+    return {
+      provider,
+      signer,
+      account,
+      chainId: parseInt(chainId, 16)
+    };
+    
   } catch (error) {
-    console.error('❌ [BLOCKCHAIN] Wallet connection failed:', error);
-    if (error.code === 4001) {
-      throw new Error('User denied wallet connection');
-    }
-    throw new Error('Failed to connect wallet: ' + error.message);
-  }
-};
-
-// Get contract instance
-export const getContract = (signer) => {
-  console.log('📄 [CONTRACT] Creating contract instance...');
-  console.log('📍 [CONTRACT] Contract address:', CONTRACT_ADDRESS);
-  
-  try {
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-    console.log('✅ [CONTRACT] Contract instance created successfully');
-    return contract;
-  } catch (error) {
-    console.error('❌ [CONTRACT] Failed to create contract instance:', error);
+    console.error('❌ [BLOCKCHAIN] Error connecting wallet:', error);
     throw error;
   }
 };
 
-// Get user roles (simplified for testing)
+/**
+ * Create contract instance
+ */
+export const createContract = (provider, signer = null) => {
+  console.log('📄 [CONTRACT] Creating contract instance...');
+  console.log('📍 [CONTRACT] Contract address:', CONTRACT_ADDRESS);
+  
+  try {
+    const contractInstance = new ethers.Contract(
+      CONTRACT_ADDRESS, 
+      CONTRACT_ABI, 
+      signer || provider
+    );
+    
+    console.log('✅ [CONTRACT] Contract instance created successfully');
+    return contractInstance;
+  } catch (error) {
+    console.error('❌ [CONTRACT] Error creating contract:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create a new batch on the blockchain
+ */
+export const createBatch = async (contract, productName, details) => {
+  console.log('🏭 [CREATE] Creating batch on blockchain...');
+  console.log('📦 [CREATE] Product:', productName);
+  console.log('📝 [CREATE] Details:', details);
+  
+  try {
+    if (!contract) {
+      throw new Error('Contract instance required');
+    }
+    
+    if (!productName || !details) {
+      throw new Error('Product name and details are required');
+    }
+    
+    console.log('⏳ [CREATE] Calling contract.createBatch...');
+    const tx = await contract.createBatch(productName, details);
+    
+    console.log('📝 [CREATE] Transaction sent:', tx.hash);
+    console.log('⏳ [CREATE] Waiting for confirmation...');
+    
+    const receipt = await tx.wait();
+    console.log('✅ [CREATE] Transaction confirmed in block:', receipt.blockNumber);
+    
+    // Get the batch ID from the events
+    const event = receipt.logs.find(log => {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        return parsed && parsed.name === 'BatchEventLog';
+      } catch {
+        return false;
+      }
+    });
+    
+    if (event) {
+      const parsedEvent = contract.interface.parseLog(event);
+      const batchId = parsedEvent.args.batchId.toString();
+      console.log('🆔 [CREATE] New batch ID:', batchId);
+      
+      return {
+        success: true,
+        batchId,
+        transactionHash: tx.hash,
+        blockNumber: receipt.blockNumber
+      };
+    } else {
+      console.warn('⚠️ [CREATE] Batch created but no event found');
+      return {
+        success: true,
+        transactionHash: tx.hash,
+        blockNumber: receipt.blockNumber
+      };
+    }
+    
+  } catch (error) {
+    console.error('❌ [CREATE] Error creating batch:', error);
+    throw new Error(`Failed to create batch: ${error.message}`);
+  }
+};
+
+/**
+ * Get all batches from the blockchain
+ */
+export const getAllBatches = async (contract) => {
+  console.log('📦 [BATCHES] Getting all batches from blockchain...');
+  
+  try {
+    if (!contract) {
+      throw new Error('Contract instance required');
+    }
+    
+    // Query all BatchEventLog events to get batch IDs
+    console.log('🔍 [BATCHES] Querying BatchEventLog events...');
+    const events = await contract.queryFilter('BatchEventLog');
+    
+    console.log('📋 [BATCHES] Found', events.length, 'events');
+    
+    // Extract unique batch IDs
+    const batchIds = [...new Set(events.map(event => event.args.batchId.toString()))];
+    
+    // Get detailed info for each batch
+    const batches = [];
+    for (const batchId of batchIds) {
+      try {
+        const batchInfo = await contract.getBatchInfo(batchId);
+        
+        const batchData = {
+          batchId: batchInfo.batchId.toString(),
+          creationTimestamp: Number(batchInfo.creationTimestamp),
+          processor: batchInfo.processor,
+          isCompromised: batchInfo.isCompromised,
+          status: Number(batchInfo.status),
+          currentOwner: batchInfo.currentOwner,
+          
+          // Get events for this batch
+          events: events
+            .filter(e => e.args.batchId.toString() === batchId)
+            .map(e => ({
+              eventType: e.args.eventType,
+              details: e.args.details,
+              temperature: Number(e.args.temperature),
+              timestamp: Number(e.args.timestamp),
+              actor: e.args.actor
+            }))
+            .sort((a, b) => b.timestamp - a.timestamp) // Most recent first
+        };
+        
+        // Add latest event info
+        if (batchData.events.length > 0) {
+          batchData.latestEvent = batchData.events[0];
+        }
+        
+        batches.push(batchData);
+      } catch (error) {
+        console.warn(`⚠️ [BATCHES] Error getting info for batch ${batchId}:`, error);
+      }
+    }
+    
+    console.log('✅ [BATCHES] Retrieved', batches.length, 'batches');
+    return batches;
+    
+  } catch (error) {
+    console.error('❌ [BATCHES] Error getting batches:', error);
+    throw new Error(`Failed to get batches: ${error.message}`);
+  }
+};
+
+/**
+ * Get user roles for the connected account
+ */
 export const getUserRoles = async (contract, account) => {
   console.log('👥 [ROLES] Simplified role check - all users have access');
   console.log('👤 [ROLES] Account:', account);
   
-  // For the prototype, everyone gets all roles
-  // Real role restrictions are handled in frontend via RoleContext
+  // In simplified mode, all users have all permissions for testing
   const roles = {
     isAdmin: true,
     isProcessor: true,
     isDistributor: true,
-    isRetailer: true,
-    hasAnyRole: true
+    isRetailer: true
   };
   
   console.log('✅ [ROLES] Simplified roles (UI controls permissions):');
@@ -288,208 +286,66 @@ export const getUserRoles = async (contract, account) => {
   console.log('   🏭 Processor:', roles.isProcessor);
   console.log('   🚚 Distributor:', roles.isDistributor);
   console.log('   🏪 Retailer:', roles.isRetailer);
-
+  
   return roles;
 };
 
-// Utility functions
-export const formatAddress = (address, startLength = 6, endLength = 4) => {
-  if (!address) return '';
-  return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
-};
-
-export const formatTimestamp = (timestamp) => {
+/**
+ * Switch network to Hardhat local
+ */
+export const switchToHardhat = async () => {
   try {
-    const date = new Date(parseInt(timestamp) * 1000);
-    return date.toLocaleString();
-  } catch (error) {
-    console.warn('Error formatting timestamp:', error);
-    return 'Invalid Date';
-  }
-};
-
-export const getStatusText = (status) => {
-  const statusMap = {
-    0: 'Created',
-    1: 'In Transit', 
-    2: 'Delivered',
-    3: 'Compromised'
-  };
-  return statusMap[status] || 'Unknown';
-};
-
-export const getStatusBadgeClass = (status, isCompromised) => {
-  if (isCompromised) return 'danger';
-  
-  const classMap = {
-    0: 'primary',    // Created
-    1: 'warning',    // In Transit
-    2: 'success',    // Delivered
-    3: 'danger'      // Compromised
-  };
-  return classMap[status] || 'secondary';
-};
-
-// Placeholder functions for dashboard
-export const getAllBatches = async (contract) => {
-  console.log('📦 [BATCHES] Getting all batches from blockchain...');
-  
-  try {
-    if (!contract) {
-      throw new Error('Contract not available');
-    }
-
-    // Get all BatchEventLog events from the contract
-    console.log('🔍 [BATCHES] Querying BatchEventLog events...');
-    const filter = contract.filters.BatchEventLog();
-    const events = await contract.queryFilter(filter);
-    
-    console.log(`📋 [BATCHES] Found ${events.length} events`);
-
-    // Group events by batch ID to build batch objects
-    const batchesMap = new Map();
-    
-    for (const event of events) {
-      const args = event.args;
-      const batchId = args.batchId.toString();
-      
-      if (!batchesMap.has(batchId)) {
-        batchesMap.set(batchId, {
-          id: batchId,
-          events: [],
-          latestEvent: null
-        });
-      }
-      
-      const eventData = {
-        blockNumber: event.blockNumber,
-        transactionHash: event.transactionHash,
-        timestamp: args.timestamp.toString(),
-        actor: args.actor,
-        eventType: args.eventType,
-        details: args.details,
-        temperature: args.temperature.toString()
-      };
-      
-      batchesMap.get(batchId).events.push(eventData);
-    }
-
-    // Convert to array and get latest state for each batch
-    const batches = [];
-    for (const [batchId, batchData] of batchesMap) {
-      // Sort events by timestamp to find the latest
-      batchData.events.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
-      batchData.latestEvent = batchData.events[0];
-      
-      // Get current batch state from contract
-      try {
-        const batchState = await contract.batches(batchId);
-        batches.push({
-          id: batchId,
-          batchId: batchState.batchId.toString(),
-          creationTimestamp: batchState.creationTimestamp.toString(),
-          processor: batchState.processor,
-          isCompromised: batchState.isCompromised,
-          status: batchState.status,
-          currentOwner: batchState.currentOwner,
-          events: batchData.events,
-          latestEvent: batchData.latestEvent
-        });
-      } catch (error) {
-        console.warn(`⚠️ [BATCHES] Could not get state for batch ${batchId}:`, error);
-      }
-    }
-
-    console.log(`✅ [BATCHES] Retrieved ${batches.length} batches`);
-    return batches;
-
-  } catch (error) {
-    console.error('❌ [BATCHES] Error getting batches:', error);
-    throw new Error(`Failed to get batches: ${error.message}`);
-  }
-};
-
-export const getBatchInfo = async () => {
-  console.log('📋 [BATCH] Getting batch info (placeholder)');
-  return {};
-};
-
-// Placeholder functions for other components
-export const createBatch = async (contract, productName, additionalDetails) => {
-  console.log('🏭 [CREATE] Creating batch on blockchain...');
-  console.log('📦 [CREATE] Product:', productName);
-  console.log('📝 [CREATE] Details:', additionalDetails);
-  
-  try {
-    if (!contract) {
-      throw new Error('Contract not available');
-    }
-
-    if (!productName || !productName.trim()) {
-      throw new Error('Product name is required');
-    }
-
-    // Call the smart contract's createBatch function
-    console.log('⏳ [CREATE] Calling contract.createBatch...');
-    const tx = await contract.createBatch(
-      productName.trim(),
-      additionalDetails || ''
-    );
-
-    console.log('📤 [CREATE] Transaction sent:', tx.hash);
-    console.log('⏳ [CREATE] Waiting for confirmation...');
-    
-    // Wait for transaction to be mined
-    const receipt = await tx.wait();
-    console.log('✅ [CREATE] Transaction confirmed:', receipt.transactionHash);
-
-    // Extract batch ID from the event logs
-    const event = receipt.logs.find(log => {
-      try {
-        const parsed = contract.interface.parseLog(log);
-        return parsed.name === 'BatchEventLog';
-      } catch {
-        return false;
-      }
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x7a69' }], // 31337 in hex
     });
-
-    if (event) {
-      const parsed = contract.interface.parseLog(event);
-      const batchId = parsed.args.batchId.toString();
-      
-      console.log('🎉 [CREATE] Batch created successfully!');
-      console.log('🆔 [CREATE] Batch ID:', batchId);
-      
-      return {
-        success: true,
-        batchId: batchId,
-        transactionHash: receipt.transactionHash
-      };
+  } catch (switchError) {
+    // This error code indicates that the chain has not been added to MetaMask
+    if (switchError.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: '0x7a69',
+              chainName: 'Hardhat Local',
+              rpcUrls: ['http://127.0.0.1:8545'],
+              nativeCurrency: {
+                name: 'ETH',
+                symbol: 'ETH',
+                decimals: 18
+              }
+            }
+          ]
+        });
+      } catch (addError) {
+        throw new Error('Failed to add Hardhat network to MetaMask');
+      }
     } else {
-      console.log('⚠️ [CREATE] Batch created but could not extract ID');
-      return {
-        success: true,
-        batchId: 'unknown',
-        transactionHash: receipt.transactionHash
-      };
-    }
-
-  } catch (error) {
-    console.error('❌ [CREATE] Error creating batch:', error);
-    
-    // Handle specific error types
-    if (error.code === 'ACTION_REJECTED') {
-      throw new Error('Transaction was rejected by user');
-    } else if (error.code === 'INSUFFICIENT_FUNDS') {
-      throw new Error('Insufficient funds for transaction');
-    } else if (error.message.includes('PROCESSOR_ROLE')) {
-      throw new Error('Only processors can create batches');
-    } else {
-      throw new Error(error.message || 'Failed to create batch');
+      throw switchError;
     }
   }
 };
 
+/**
+ * Check if contract has getBatchInfo method
+ */
+export const checkContractMethods = (contract) => {
+  console.log('🔍 [DEBUG] Available contract methods:');
+  console.log('   - createBatch:', typeof contract.createBatch === 'function');
+  console.log('   - getBatchInfo:', typeof contract.getBatchInfo === 'function');
+  console.log('   - batches:', typeof contract.batches === 'function');
+  console.log('   - hasRole:', typeof contract.hasRole === 'function');
+  
+  return {
+    hasCreateBatch: typeof contract.createBatch === 'function',
+    hasGetBatchInfo: typeof contract.getBatchInfo === 'function',
+    hasBatches: typeof contract.batches === 'function',
+    hasHasRole: typeof contract.hasRole === 'function'
+  };
+};
+
+// Placeholder functions (to be implemented)
 export const getBatchHistory = async () => {
   console.log('📚 [HISTORY] Get batch history (placeholder)');
   return [];
@@ -503,6 +359,12 @@ export const getBatchDetails = async (contract, batchId) => {
   }
 
   try {
+    // Debug: Check if method exists
+    const methods = checkContractMethods(contract);
+    if (!methods.hasGetBatchInfo) {
+      throw new Error('getBatchInfo method not available on contract');
+    }
+    
     // Get basic batch info
     const batchInfo = await contract.getBatchInfo(batchId);
     console.log('📋 [DETAILS] Raw batch info:', batchInfo);

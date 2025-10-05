@@ -1,7 +1,7 @@
 // frontend/src/utils/BlockchainContext.js
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { connectWallet, getContract, getUserRoles } from './blockchain';
+import { connectWallet, getContract, getUserRoles } from './blockchain-clean';
 
 /**
  * Blockchain Context for FROST-CHAIN Frontend
@@ -35,13 +35,25 @@ export const BlockchainProvider = ({ children }) => {
 
   // Check if wallet is already connected on page load
   useEffect(() => {
+    console.log('🚀 [CONTEXT] BlockchainProvider mounted');
+    
     const checkConnection = async () => {
+      console.log('🔍 [CONTEXT] Checking existing wallet connection...');
+      console.log('🌐 [CONTEXT] Window.ethereum available:', !!window.ethereum);
+      
+      if (window.ethereum) {
+        console.log('📱 [CONTEXT] Selected address:', window.ethereum.selectedAddress);
+      }
+      
       try {
         if (window.ethereum && window.ethereum.selectedAddress) {
+          console.log('✅ [CONTEXT] Existing connection found, auto-connecting...');
           await connectToWallet();
+        } else {
+          console.log('ℹ️ [CONTEXT] No existing connection found');
         }
       } catch (error) {
-        console.error('Failed to check existing connection:', error);
+        console.error('❌ [CONTEXT] Failed to check existing connection:', error);
       }
     };
 
@@ -100,22 +112,32 @@ export const BlockchainProvider = ({ children }) => {
   }, [contract, account, loadUserRoles]);
 
   const connectToWallet = async () => {
+    console.log('🚀 [CONTEXT] Starting wallet connection process...');
     try {
       setIsLoading(true);
-      const { provider, signer, account } = await connectWallet();
+      console.log('⏳ [CONTEXT] Setting loading state to true');
       
+      console.log('🔗 [CONTEXT] Calling connectWallet function...');
+      const { provider, signer, account } = await connectWallet();
+      console.log('✅ [CONTEXT] Wallet connection successful');
+      
+      console.log('💾 [CONTEXT] Setting state variables...');
       setProvider(provider);
       setSigner(signer);
       setAccount(account);
       setIsConnected(true);
+      console.log('✅ [CONTEXT] State updated - Connected:', true, 'Account:', account);
 
       // Create contract instance
+      console.log('📄 [CONTEXT] Creating contract instance...');
       const contractInstance = getContract(signer);
       setContract(contractInstance);
+      console.log('✅ [CONTEXT] Contract instance created and set');
 
       toast.success('Wallet connected successfully!');
+      console.log('🎉 [CONTEXT] Wallet connection completed successfully');
     } catch (error) {
-      console.error('Failed to connect wallet:', error);
+      console.error('❌ [CONTEXT] Failed to connect wallet:', error);
       toast.error('Failed to connect wallet: ' + error.message);
     } finally {
       setIsLoading(false);

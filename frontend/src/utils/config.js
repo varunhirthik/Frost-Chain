@@ -647,3 +647,17 @@ export const APP_CONFIG = {
   transactionTimeout: 300000, // 5 minutes
   pollingInterval: 5000 // 5 seconds
 };
+
+// Debug logging for config (after ABI is defined)
+console.log('⚙️ [CONFIG] Configuration loaded');
+console.log('📍 [CONFIG] Contract Address:', CONTRACT_ADDRESS);
+console.log('📋 [CONFIG] ABI loaded with', CONTRACT_ABI ? CONTRACT_ABI.length + ' functions' : 'no ABI');
+
+// Log config on window for debugging
+if (typeof window !== 'undefined') {
+  window.FROST_CHAIN_CONFIG = {
+    CONTRACT_ADDRESS,
+    ABI_LENGTH: CONTRACT_ABI ? CONTRACT_ABI.length : 0
+  };
+  console.log('🌐 [CONFIG] Config attached to window.FROST_CHAIN_CONFIG');
+}

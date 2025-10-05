@@ -11,7 +11,7 @@ import { formatAddress } from '../utils/blockchain';
  * Role-aware navigation that shows different options based on user permissions
  */
 const Navigation = () => {
-  const { account, userRoles, networkInfo, disconnectWallet } = useBlockchain();
+  const { account, userRoles, networkInfo, connectToWallet, disconnect, isLoading } = useBlockchain();
 
   const getRoleText = () => {
     const roles = [];
@@ -34,7 +34,7 @@ const Navigation = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         
         <Navbar.Collapse id="basic-navbar-nav">
-          {account && (
+          {account ? (
             <>
               <Nav className="me-auto">
                 <LinkContainer to="/">
@@ -68,11 +68,21 @@ const Navigation = () => {
                   </Navbar.Text>
                 )}
                 
-                <Button variant="outline-light" size="sm" onClick={disconnectWallet}>
+                <Button variant="outline-light" size="sm" onClick={disconnect}>
                   Disconnect
                 </Button>
               </Nav>
             </>
+          ) : (
+            <Nav className="ms-auto">
+              <Button 
+                variant="primary" 
+                onClick={connectToWallet}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Connecting...' : 'Connect Wallet'}
+              </Button>
+            </Nav>
           )}
         </Navbar.Collapse>
       </Container>

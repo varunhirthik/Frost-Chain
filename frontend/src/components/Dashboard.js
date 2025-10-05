@@ -28,19 +28,38 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const loadDashboardData = useCallback(async () => {
+    console.log('📊 [DASHBOARD] Starting dashboard data load...');
+    console.log('📄 [DASHBOARD] Contract available:', !!contract);
+    console.log('👤 [DASHBOARD] Account:', account);
+    
+    if (!contract) {
+      console.warn('⚠️ [DASHBOARD] No contract available, skipping data load');
+      return;
+    }
+    
+    if (!account) {
+      console.warn('⚠️ [DASHBOARD] No account available, skipping data load');
+      return;
+    }
+    
     try {
       setLoading(true);
+      console.log('⏳ [DASHBOARD] Loading state set to true');
       
       // Get all batches
+      console.log('📦 [DASHBOARD] Fetching all batches...');
       const batches = await getAllBatches(contract);
+      console.log('✅ [DASHBOARD] Batches fetched:', batches.length, 'batches');
       
       // Calculate statistics
       let compromisedCount = 0;
       let userBatchCount = 0;
       
+      console.log('🔍 [DASHBOARD] Processing batch details...');
       const batchesWithDetails = await Promise.all(
         batches.slice(0, 10).map(async (batch) => {
           try {
+            console.log('📋 [DASHBOARD] Loading details for batch:', batch.batchId);
             const batchInfo = await getBatchInfo(contract, batch.batchId);
             
             if (batchInfo.isCompromised) {
@@ -57,31 +76,45 @@ const Dashboard = () => {
               ...batchInfo
             };
           } catch (error) {
-            console.error(`Error loading batch ${batch.batchId}:`, error);
+            console.error(`❌ [DASHBOARD] Error loading batch ${batch.batchId}:`, error);
             return batch;
           }
         })
       );
       
-      setStats({
+      const finalStats = {
         totalBatches: batches.length,
         compromisedBatches: compromisedCount,
         userBatches: userBatchCount
-      });
+      };
       
+      console.log('📈 [DASHBOARD] Final statistics:', finalStats);
+      setStats(finalStats);
+      
+      console.log('📦 [DASHBOARD] Setting recent batches:', batchesWithDetails.length, 'items');
       setRecentBatches(batchesWithDetails);
       
+      console.log('✅ [DASHBOARD] Dashboard data loaded successfully');
+      
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error('❌ [DASHBOARD] Error loading dashboard data:', error);
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
+      console.log('✅ [DASHBOARD] Loading state set to false');
     }
   }, [contract, account]);
 
   useEffect(() => {
+    console.log('🔄 [DASHBOARD] useEffect triggered');
+    console.log('📄 [DASHBOARD] Contract state:', !!contract);
+    console.log('👤 [DASHBOARD] Account state:', account);
+    
     if (contract) {
+      console.log('✅ [DASHBOARD] Contract available, calling loadDashboardData');
       loadDashboardData();
+    } else {
+      console.log('⏳ [DASHBOARD] Waiting for contract...');
     }
   }, [contract, loadDashboardData]);
 

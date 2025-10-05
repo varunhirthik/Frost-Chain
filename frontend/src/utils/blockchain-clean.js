@@ -148,33 +148,114 @@ export const formatAddress = (address, startLength = 6, endLength = 4) => {
 };
 
 export const formatTimestamp = (timestamp) => {
-  return new Date(timestamp).toLocaleString();
-};
-
-export const getStatusText = (role) => {
-  switch (role) {
-    case 0: return 'Processing';
-    case 1: return 'In Transit';
-    case 2: return 'At Retailer';
-    default: return 'Unknown';
+  try {
+    const date = new Date(parseInt(timestamp) * 1000);
+    return date.toLocaleString();
+  } catch (error) {
+    console.warn('Error formatting timestamp:', error);
+    return 'Invalid Date';
   }
 };
 
-export const getStatusBadgeClass = (role, isCompromised) => {
+export const getStatusText = (status) => {
+  const statusMap = {
+    0: 'Created',
+    1: 'In Transit', 
+    2: 'Delivered',
+    3: 'Compromised'
+  };
+  return statusMap[status] || 'Unknown';
+};
+
+export const getStatusBadgeClass = (status, isCompromised) => {
   if (isCompromised) return 'danger';
   
-  switch (role) {
-    case 0: return 'primary';
-    case 1: return 'warning';
-    case 2: return 'success';
-    default: return 'secondary';
-  }
+  const classMap = {
+    0: 'primary',    // Created
+    1: 'warning',    // In Transit
+    2: 'success',    // Delivered
+    3: 'danger'      // Compromised
+  };
+  return classMap[status] || 'secondary';
 };
 
 // Placeholder functions for dashboard
-export const getAllBatches = async () => {
-  console.log('📦 [BATCHES] Getting all batches (placeholder)');
-  return [];
+export const getAllBatches = async (contract) => {
+  console.log('📦 [BATCHES] Getting all batches from blockchain...');
+  
+  try {
+    if (!contract) {
+      throw new Error('Contract not available');
+    }
+
+    // Get all BatchEventLog events from the contract
+    console.log('🔍 [BATCHES] Querying BatchEventLog events...');
+    const filter = contract.filters.BatchEventLog();
+    const events = await contract.queryFilter(filter);
+    
+    console.log(`📋 [BATCHES] Found ${events.length} events`);
+
+    // Group events by batch ID to build batch objects
+    const batchesMap = new Map();
+    
+    for (const event of events) {
+      const args = event.args;
+      const batchId = args.batchId.toString();
+      
+      if (!batchesMap.has(batchId)) {
+        batchesMap.set(batchId, {
+          id: batchId,
+          events: [],
+          latestEvent: null
+        });
+      }
+      
+      const eventData = {
+        blockNumber: event.blockNumber,
+        transactionHash: event.transactionHash,
+        timestamp: args.timestamp.toString(),
+        actor: args.actor,
+        eventType: args.eventType,
+        details: args.details,
+        temperature: args.temperature.toString()
+      };
+      
+      batchesMap.get(batchId).events.push(eventData);
+    }
+
+    // Convert to array and get latest state for each batch
+    const batches = [];
+    for (const [batchId, batchData] of batchesMap) {
+      // Sort events by timestamp to find the latest
+      batchData.events.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
+      batchData.latestEvent = batchData.events[0];
+      
+      // Get current batch state from contract
+      try {
+        const batchState = await contract.batches(batchId);
+        batches.push({
+          id: batchId,
+          batchId: batchState.batchId.toString(),
+          creationTimestamp: batchState.creationTimestamp.toString(),
+          processor: batchState.processor,
+          isCompromised: batchState.isCompromised,
+          status: batchState.status,
+          currentOwner: batchState.currentOwner,
+          events: batchData.events,
+          latestEvent: batchData.latestEvent
+        });
+      } catch (error) {
+        console.warn(`⚠️ [BATCHES] Could not get state for batch ${batchId}:`, error);
+      }
+    }
+
+    console.log(`✅ [BATCHES] Retrieved ${batches.length} batches`);
+    return batches;
+
+  } catch (error) {
+    console.error('❌ [BATCHES] Error getting batches:', error);
+    throw new Error(`Failed to get batches: ${error.message}`);
+  }
 };
 
 export const getBatchInfo = async () => {
@@ -183,9 +264,79 @@ export const getBatchInfo = async () => {
 };
 
 // Placeholder functions for other components
-export const createBatch = async () => {
-  console.log('🏭 [CREATE] Create batch (placeholder)');
-  throw new Error('Create batch not implemented yet');
+export const createBatch = async (contract, productName, additionalDetails) => {
+  console.log('🏭 [CREATE] Creating batch on blockchain...');
+  console.log('📦 [CREATE] Product:', productName);
+  console.log('📝 [CREATE] Details:', additionalDetails);
+  
+  try {
+    if (!contract) {
+      throw new Error('Contract not available');
+    }
+
+    if (!productName || !productName.trim()) {
+      throw new Error('Product name is required');
+    }
+
+    // Call the smart contract's createBatch function
+    console.log('⏳ [CREATE] Calling contract.createBatch...');
+    const tx = await contract.createBatch(
+      productName.trim(),
+      additionalDetails || ''
+    );
+
+    console.log('📤 [CREATE] Transaction sent:', tx.hash);
+    console.log('⏳ [CREATE] Waiting for confirmation...');
+    
+    // Wait for transaction to be mined
+    const receipt = await tx.wait();
+    console.log('✅ [CREATE] Transaction confirmed:', receipt.transactionHash);
+
+    // Extract batch ID from the event logs
+    const event = receipt.logs.find(log => {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        return parsed.name === 'BatchEventLog';
+      } catch {
+        return false;
+      }
+    });
+
+    if (event) {
+      const parsed = contract.interface.parseLog(event);
+      const batchId = parsed.args.batchId.toString();
+      
+      console.log('🎉 [CREATE] Batch created successfully!');
+      console.log('🆔 [CREATE] Batch ID:', batchId);
+      
+      return {
+        success: true,
+        batchId: batchId,
+        transactionHash: receipt.transactionHash
+      };
+    } else {
+      console.log('⚠️ [CREATE] Batch created but could not extract ID');
+      return {
+        success: true,
+        batchId: 'unknown',
+        transactionHash: receipt.transactionHash
+      };
+    }
+
+  } catch (error) {
+    console.error('❌ [CREATE] Error creating batch:', error);
+    
+    // Handle specific error types
+    if (error.code === 'ACTION_REJECTED') {
+      throw new Error('Transaction was rejected by user');
+    } else if (error.code === 'INSUFFICIENT_FUNDS') {
+      throw new Error('Insufficient funds for transaction');
+    } else if (error.message.includes('PROCESSOR_ROLE')) {
+      throw new Error('Only processors can create batches');
+    } else {
+      throw new Error(error.message || 'Failed to create batch');
+    }
+  }
 };
 
 export const getBatchHistory = async () => {

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useBlockchain } from '../utils/BlockchainContext';
-import { createBatch as createBatchOnChain } from '../utils/blockchain';
+import { createBatch as createBatchOnChain } from '../utils/blockchain-clean';
 import { toast } from 'react-toastify';
 
 /**

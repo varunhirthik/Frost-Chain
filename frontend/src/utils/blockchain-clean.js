@@ -495,9 +495,46 @@ export const getBatchHistory = async () => {
   return [];
 };
 
-export const getBatchDetails = async () => {
-  console.log('📋 [DETAILS] Get batch details (placeholder)');
-  return {};
+export const getBatchDetails = async (contract, batchId) => {
+  console.log('📋 [DETAILS] Getting batch details for batch ID:', batchId);
+  
+  if (!contract || batchId === undefined || batchId === null) {
+    throw new Error('Contract and batch ID are required');
+  }
+
+  try {
+    // Get basic batch info
+    const batchInfo = await contract.getBatchInfo(batchId);
+    console.log('📋 [DETAILS] Raw batch info:', batchInfo);
+    
+    // Check if batch exists (batchId should be > 0 for existing batches)
+    if (!batchInfo || batchInfo.batchId.toString() === '0') {
+      throw new Error('Batch not found');
+    }
+    
+    // Parse the batch data
+    const batch = {
+      batchId: batchInfo.batchId.toString(),
+      creationTimestamp: Number(batchInfo.creationTimestamp),
+      processor: batchInfo.processor,
+      isCompromised: batchInfo.isCompromised,
+      status: Number(batchInfo.status),
+      currentOwner: batchInfo.currentOwner,
+      
+      // Add formatted dates
+      creationDate: new Date(Number(batchInfo.creationTimestamp) * 1000),
+      
+      // Add status labels
+      statusLabel: ['Processing', 'InTransit', 'Delivered', 'Compromised'][Number(batchInfo.status)] || 'Unknown'
+    };
+
+    console.log('✅ [DETAILS] Processed batch details:', batch);
+    return batch;
+    
+  } catch (error) {
+    console.error('❌ [DETAILS] Error getting batch details:', error);
+    throw new Error(`Failed to get batch details: ${error.message}`);
+  }
 };
 
 export const updateTemperature = async () => {

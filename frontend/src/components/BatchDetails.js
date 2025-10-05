@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Badge, Table, Button, Alert, Spinner } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useBlockchain } from '../utils/BlockchainContext';
+import { useRole } from '../utils/RoleContext';
 import { getBatchDetails, updateTemperature } from '../utils/blockchain-clean';
 import { toast } from 'react-toastify';
 
@@ -14,7 +15,8 @@ import { toast } from 'react-toastify';
 const BatchDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { contract, userRoles, account } = useBlockchain();
+  const { contract, account } = useBlockchain();
+  const { isAdmin } = useRole();
   
   const [batch, setBatch] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -104,9 +106,9 @@ const BatchDetails = () => {
   };
 
   const canUserModify = () => {
-    return batch && (
-      batch.currentOwner.toLowerCase() === account?.toLowerCase() ||
-      userRoles.isAdmin
+    return batch && account && batch.currentOwner && (
+      batch.currentOwner.toLowerCase() === account.toLowerCase() ||
+      isAdmin()
     );
   };
 

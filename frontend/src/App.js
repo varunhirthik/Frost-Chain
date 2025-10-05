@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 import { BlockchainProvider } from './utils/BlockchainContext';
+import { RoleProvider } from './utils/RoleContext';
 import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import CreateBatch from './components/CreateBatch';
@@ -22,10 +23,11 @@ function App() {
   return (
     <div className="App">
       <BlockchainProvider>
-        <Router>
-          <Navigation />
-          
-          <main className="main-content">
+        <RoleProvider>
+          <Router>
+            <Navigation />
+            
+            <main className="main-content">
             <Routes>
               {/* Main Dashboard */}
               <Route path="/" element={<Dashboard />} />
@@ -57,6 +59,7 @@ function App() {
             theme="light"
           />
         </Router>
+      </RoleProvider>
       </BlockchainProvider>
     </div>
   );

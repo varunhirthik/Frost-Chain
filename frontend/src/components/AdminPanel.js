@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Table, Button, Badge, Alert, Form, Modal, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useBlockchain } from '../utils/BlockchainContext';
+import { useRole } from '../utils/RoleContext';
 import { grantRole, revokeRole, getAllBatches } from '../utils/blockchain-clean';
 import { toast } from 'react-toastify';
 
@@ -13,7 +14,8 @@ import { toast } from 'react-toastify';
  */
 const AdminPanel = () => {
   const navigate = useNavigate();
-  const { contract, userRoles, account } = useBlockchain();
+  const { contract, account } = useBlockchain();
+  const { canViewAdmin, roleLabel } = useRole();
   
   const [allBatches, setAllBatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,18 +48,18 @@ const AdminPanel = () => {
   }, [contract]);
 
   useEffect(() => {
-    if (contract && userRoles.isAdmin) {
+    if (contract && canViewAdmin()) {
       loadAdminData();
     }
-  }, [contract, userRoles.isAdmin, loadAdminData]);
+  }, [contract, canViewAdmin, loadAdminData]);
 
   // Check admin access - render after hooks
-  if (!userRoles.isAdmin) {
+  if (!canViewAdmin()) {
     return (
       <Container className="py-4">
-        <Alert variant="danger">
-          <h5>Access Denied</h5>
-          <p>You need Administrator privileges to access this panel.</p>
+        <Alert variant="warning">
+          <h5>Access Restricted</h5>
+          <p>Your current role ({roleLabel}) cannot access the admin panel. Switch to Admin role.</p>
           <Button variant="outline-primary" onClick={() => navigate('/')}>
             Back to Dashboard
           </Button>

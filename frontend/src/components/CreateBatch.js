@@ -3,16 +3,18 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useBlockchain } from '../utils/BlockchainContext';
+import { useRole } from '../utils/RoleContext';
 import { createBatch as createBatchOnChain } from '../utils/blockchain-clean';
 import { toast } from 'react-toastify';
 
 /**
  * Create Batch Component
  * 
- * Allows processors to create new product batches
+ * Allows users with appropriate roles to create new product batches
  */
 const CreateBatch = () => {
-  const { contract, userRoles } = useBlockchain();
+  const { contract } = useBlockchain();
+  const { canCreateBatch, roleLabel } = useRole();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -22,12 +24,12 @@ const CreateBatch = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check if user has permission
-  if (!userRoles.isProcessor && !userRoles.isAdmin) {
+  if (!canCreateBatch()) {
     return (
       <Container className="py-4">
-        <Alert variant="danger">
-          <h5>Access Denied</h5>
-          <p>You need Processor role to create batches. Please contact an administrator.</p>
+        <Alert variant="warning">
+          <h5>Access Restricted</h5>
+          <p>Your current role ({roleLabel}) cannot create batches. Switch to Admin or Processor role.</p>
         </Alert>
       </Container>
     );

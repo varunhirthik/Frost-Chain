@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 console.log('🔧 [BLOCKCHAIN] Loading clean blockchain module...');
 
 // Contract configuration
-export const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+export const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
 
 // Minimal ABI for testing
 export const CONTRACT_ABI = [
@@ -12,6 +12,117 @@ export const CONTRACT_ABI = [
     "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "batchId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "actor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "eventType",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "details",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "int256",
+        "name": "temperature",
+        "type": "int256"
+      }
+    ],
+    "name": "BatchEventLog",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_productName",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_additionalDetails",
+        "type": "string"
+      }
+    ],
+    "name": "createBatch",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "batches",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "batchId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint64",
+        "name": "creationTimestamp",
+        "type": "uint64"
+      },
+      {
+        "internalType": "address",
+        "name": "processor",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "isCompromised",
+        "type": "bool"
+      },
+      {
+        "internalType": "enum Traceability.BatchStatus",
+        "name": "status",
+        "type": "uint8"
+      },
+      {
+        "internalType": "address",
+        "name": "currentOwner",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [
@@ -32,6 +143,58 @@ export const CONTRACT_ABI = [
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "DEFAULT_ADMIN_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "PROCESSOR_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "DISTRIBUTOR_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "RETAILER_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
       }
     ],
     "stateMutability": "view",
@@ -107,38 +270,26 @@ export const getContract = (signer) => {
 
 // Get user roles (simplified for testing)
 export const getUserRoles = async (contract, account) => {
-  console.log('👥 [ROLES] Checking user roles...');
+  console.log('👥 [ROLES] Simplified role check - all users have access');
   console.log('👤 [ROLES] Account:', account);
   
-  try {
-    // For testing, assume deployer account is admin
-    const isAdmin = account?.toLowerCase() === '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266';
-    
-    const roles = {
-      isAdmin,
-      isProcessor: false,
-      isDistributor: false,
-      isRetailer: false,
-      hasAnyRole: isAdmin
-    };
-    
-    console.log('✅ [ROLES] Roles determined:');
-    console.log('   👑 Admin:', roles.isAdmin);
-    console.log('   🏭 Processor:', roles.isProcessor);
-    console.log('   🚚 Distributor:', roles.isDistributor);
-    console.log('   🏪 Retailer:', roles.isRetailer);
+  // For the prototype, everyone gets all roles
+  // Real role restrictions are handled in frontend via RoleContext
+  const roles = {
+    isAdmin: true,
+    isProcessor: true,
+    isDistributor: true,
+    isRetailer: true,
+    hasAnyRole: true
+  };
+  
+  console.log('✅ [ROLES] Simplified roles (UI controls permissions):');
+  console.log('   👑 Admin:', roles.isAdmin);
+  console.log('   🏭 Processor:', roles.isProcessor);
+  console.log('   🚚 Distributor:', roles.isDistributor);
+  console.log('   🏪 Retailer:', roles.isRetailer);
 
-    return roles;
-  } catch (error) {
-    console.error('❌ [ROLES] Failed to check user roles:', error);
-    return {
-      isAdmin: false,
-      isProcessor: false,
-      isDistributor: false,
-      isRetailer: false,
-      hasAnyRole: false
-    };
-  }
+  return roles;
 };
 
 // Utility functions

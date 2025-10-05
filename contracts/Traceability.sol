@@ -131,7 +131,7 @@ contract Traceability is AccessControl {
 
     /**
      * @dev Creates a new batch of products
-     * Only callable by an account with PROCESSOR_ROLE
+     * Anyone can create batches (simplified for prototype)
      * Emits BatchEventLog with eventType "CREATED"
      * 
      * @param _productName The name of the product in the batch
@@ -141,7 +141,7 @@ contract Traceability is AccessControl {
     function createBatch(
         string memory _productName,
         string memory _additionalDetails
-    ) public onlyRole(PROCESSOR_ROLE) returns (uint256) {
+    ) public returns (uint256) {
         _batchIds.increment();
         uint256 newBatchId = _batchIds.current();
 

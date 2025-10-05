@@ -147,6 +147,30 @@ export const formatAddress = (address, startLength = 6, endLength = 4) => {
   return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
 };
 
+export const formatTimestamp = (timestamp) => {
+  return new Date(timestamp).toLocaleString();
+};
+
+export const getStatusText = (role) => {
+  switch (role) {
+    case 0: return 'Processing';
+    case 1: return 'In Transit';
+    case 2: return 'At Retailer';
+    default: return 'Unknown';
+  }
+};
+
+export const getStatusBadgeClass = (role, isCompromised) => {
+  if (isCompromised) return 'danger';
+  
+  switch (role) {
+    case 0: return 'primary';
+    case 1: return 'warning';
+    case 2: return 'success';
+    default: return 'secondary';
+  }
+};
+
 // Placeholder functions for dashboard
 export const getAllBatches = async () => {
   console.log('📦 [BATCHES] Getting all batches (placeholder)');
@@ -156,6 +180,37 @@ export const getAllBatches = async () => {
 export const getBatchInfo = async () => {
   console.log('📋 [BATCH] Getting batch info (placeholder)');
   return {};
+};
+
+// Placeholder functions for other components
+export const createBatch = async () => {
+  console.log('🏭 [CREATE] Create batch (placeholder)');
+  throw new Error('Create batch not implemented yet');
+};
+
+export const getBatchHistory = async () => {
+  console.log('📚 [HISTORY] Get batch history (placeholder)');
+  return [];
+};
+
+export const getBatchDetails = async () => {
+  console.log('📋 [DETAILS] Get batch details (placeholder)');
+  return {};
+};
+
+export const updateTemperature = async () => {
+  console.log('🌡️ [TEMP] Update temperature (placeholder)');
+  throw new Error('Update temperature not implemented yet');
+};
+
+export const grantRole = async () => {
+  console.log('👑 [ROLE] Grant role (placeholder)');
+  throw new Error('Grant role not implemented yet');
+};
+
+export const revokeRole = async () => {
+  console.log('🚫 [ROLE] Revoke role (placeholder)');
+  throw new Error('Revoke role not implemented yet');
 };
 
 console.log('✅ [BLOCKCHAIN] Clean blockchain module loaded successfully');

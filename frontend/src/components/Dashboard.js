@@ -4,7 +4,7 @@ import { Container, Row, Col, Card, Badge, Button, Table, Alert } from 'react-bo
 import { Link } from 'react-router-dom';
 import { FiPackage, FiThermometer, FiUsers, FiAlertTriangle } from 'react-icons/fi';
 import { useBlockchain } from '../utils/BlockchainContext';
-import { getAllBatches, getBatchInfo, formatAddress, formatTimestamp, getStatusText, getStatusBadgeClass } from '../utils/blockchain';
+import { getAllBatches, getBatchInfo, formatAddress, formatTimestamp, getStatusText, getStatusBadgeClass } from '../utils/blockchain-clean';
 import LoadingSpinner from './LoadingSpinner';
 import { toast } from 'react-toastify';
 

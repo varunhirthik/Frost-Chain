@@ -414,4 +414,45 @@ export const revokeRole = async () => {
   throw new Error('Revoke role not implemented yet');
 };
 
+// Utility functions for Dashboard
+export const getBatchInfo = async (contract, batchId) => {
+  // This is the same as getBatchDetails but with a different name for compatibility
+  return await getBatchDetails(contract, batchId);
+};
+
+export const formatTimestamp = (timestamp) => {
+  if (!timestamp) return 'N/A';
+  
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+export const getStatusText = (status) => {
+  const statusMap = {
+    0: 'Processing',
+    1: 'In Transit', 
+    2: 'Delivered',
+    3: 'Compromised'
+  };
+  
+  return statusMap[status] || 'Unknown';
+};
+
+export const getStatusBadgeClass = (status) => {
+  const classMap = {
+    0: 'warning',     // Processing - yellow
+    1: 'info',        // In Transit - blue  
+    2: 'success',     // Delivered - green
+    3: 'danger'       // Compromised - red
+  };
+  
+  return classMap[status] || 'secondary';
+};
+
 console.log('✅ [BLOCKCHAIN] Clean blockchain module loaded successfully');

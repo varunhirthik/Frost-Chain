@@ -3,7 +3,7 @@ import React from 'react';
 import { Navbar, Nav, Container, Badge, Button } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import { useBlockchain } from '../utils/BlockchainContext';
-import { formatAddress } from '../utils/blockchain';
+import { formatAddress } from '../utils/blockchain-clean';
 
 /**
  * Navigation Component

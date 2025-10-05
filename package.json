@@ -1,0 +1,39 @@
+{
+  "name": "frost-chain",
+  "version": "2.0.0",
+  "description": "Production-ready blockchain traceability system for frozen food supply chain",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "verify": "hardhat verify",
+    "clean": "hardhat clean",
+    "frontend:install": "cd frontend && npm ci",
+    "frontend:start": "cd frontend && npm start",
+    "frontend:build": "cd frontend && npm run build"
+  },
+  "keywords": [
+    "blockchain",
+    "supply-chain",
+    "traceability",
+    "ethereum",
+    "smart-contracts",
+    "food-safety"
+  ],
+  "author": "FROST-CHAIN Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "5.0.0",
+    "hardhat": "2.22.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "4.9.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

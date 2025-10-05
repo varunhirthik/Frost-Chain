@@ -1,0 +1,133 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Install frontend dependencies
+      run: cd frontend && npm ci
+    
+    - name: Run linting
+      run: npm run lint
+    
+    - name: Run smart contract tests
+      run: npm test
+    
+    - name: Run frontend tests
+      run: cd frontend && npm test -- --coverage --watchAll=false
+    
+    - name: Build frontend
+      run: cd frontend && npm run build
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage/lcov.info,./frontend/coverage/lcov.info
+        fail_ci_if_error: true
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+    
+    - name: Run npm audit
+      run: npm audit --audit-level high
+
+  smart-contract-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Compile contracts
+      run: npx hardhat compile
+    
+    - name: Run Slither analysis
+      uses: crytic/slither-action@v0.3.0
+      id: slither
+      with:
+        sarif: results.sarif
+    
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ steps.slither.outputs.sarif }}
+
+  deploy:
+    needs: [test, security, smart-contract-analysis]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Install frontend dependencies
+      run: cd frontend && npm ci
+    
+    - name: Build frontend
+      run: cd frontend && npm run build
+    
+    - name: Deploy to staging
+      env:
+        SEPOLIA_URL: ${{ secrets.SEPOLIA_URL }}
+        PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+      run: |
+        npx hardhat run scripts/deploy.js --network sepolia
+        echo "Deployment completed"
+    
+    - name: Verify contract
+      env:
+        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+      run: |
+        # Contract verification will be added based on deployment address
+        echo "Contract verification step"

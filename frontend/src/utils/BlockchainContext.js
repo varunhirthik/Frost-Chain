@@ -1,7 +1,7 @@
 // frontend/src/utils/BlockchainContext.js
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { connectWallet, getContract, getUserRoles } from './blockchain-clean';
+import { connectWallet, createContract, getUserRoles } from './blockchain-clean';
 
 /**
  * Blockchain Context for FROST-CHAIN Frontend
@@ -130,7 +130,7 @@ export const BlockchainProvider = ({ children }) => {
 
       // Create contract instance
       console.log('📄 [CONTEXT] Creating contract instance...');
-      const contractInstance = getContract(signer);
+      const contractInstance = createContract(provider, signer);
       setContract(contractInstance);
       console.log('✅ [CONTEXT] Contract instance created and set');
 

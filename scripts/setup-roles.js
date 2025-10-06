@@ -65,70 +65,72 @@ async function main() {
         // These are example addresses - replace with real addresses in production
         processors: [
             // admin already has processor role
+            // Add more processor addresses here:
+            // "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", // Example: Second Hardhat account
         ],
         distributors: [
-            // Add distributor addresses here
-            // "0x1234567890123456789012345678901234567890"
+            // Add distributor addresses here:
+            // "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", // Example: Third Hardhat account
         ],
         retailers: [
-            // Add retailer addresses here
-            // "0x0987654321098765432109876543210987654321"
+            // Add retailer addresses here:
+            // "0x90F79bf6EB2c4f870365E785982E1f101E93b906", // Example: Fourth Hardhat account
         ],
         oracles: [
-            // Add oracle addresses here
-            // "0x1111111111111111111111111111111111111111"
+            // Add oracle addresses here:
+            // "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65", // Example: Fifth Hardhat account
         ]
     };
-    
+
     console.log("\n--- Role Assignment ---");
-    console.log("ℹ️  Current setup uses example addresses. In production, replace with actual participant addresses.");
+    console.log("ℹ️  To grant roles to specific addresses, uncomment and update the addresses above.");
+    console.log("ℹ️  You can also use the Admin Panel in the frontend for individual role management.");
+    
+    // Helper function to grant role with error handling
+    const grantRoleWithErrorHandling = async (roleType, roleName, address) => {
+        try {
+            console.log(`\n⏳ Granting ${roleName} to: ${address}`);
+            const tx = await traceability.grantRole(roleType, address);
+            await tx.wait();
+            console.log(`✅ Successfully granted ${roleName} to: ${address}`);
+            return true;
+        } catch (error) {
+            console.error(`❌ Failed to grant ${roleName} to: ${address}`);
+            console.error(`   Error: ${error.message}`);
+            return false;
+        }
+    };
+    
     
     // Grant processor roles
+    let successCount = 0;
+    let totalAttempts = 0;
+    
     for (const processor of participants.processors) {
-        try {
-            const tx = await traceability.grantRole(PROCESSOR_ROLE, processor);
-            await tx.wait();
-            console.log("✅ Granted PROCESSOR_ROLE to:", processor);
-        } catch (error) {
-            console.error("❌ Failed to grant PROCESSOR_ROLE to:", processor);
-            console.error(error.message);
-        }
+        totalAttempts++;
+        const success = await grantRoleWithErrorHandling(PROCESSOR_ROLE, "PROCESSOR_ROLE", processor);
+        if (success) successCount++;
     }
     
     // Grant distributor roles
     for (const distributor of participants.distributors) {
-        try {
-            const tx = await traceability.grantRole(DISTRIBUTOR_ROLE, distributor);
-            await tx.wait();
-            console.log("✅ Granted DISTRIBUTOR_ROLE to:", distributor);
-        } catch (error) {
-            console.error("❌ Failed to grant DISTRIBUTOR_ROLE to:", distributor);
-            console.error(error.message);
-        }
+        totalAttempts++;
+        const success = await grantRoleWithErrorHandling(DISTRIBUTOR_ROLE, "DISTRIBUTOR_ROLE", distributor);
+        if (success) successCount++;
     }
     
     // Grant retailer roles
     for (const retailer of participants.retailers) {
-        try {
-            const tx = await traceability.grantRole(RETAILER_ROLE, retailer);
-            await tx.wait();
-            console.log("✅ Granted RETAILER_ROLE to:", retailer);
-        } catch (error) {
-            console.error("❌ Failed to grant RETAILER_ROLE to:", retailer);
-            console.error(error.message);
-        }
+        totalAttempts++;
+        const success = await grantRoleWithErrorHandling(RETAILER_ROLE, "RETAILER_ROLE", retailer);
+        if (success) successCount++;
     }
     
     // Grant oracle roles
     for (const oracle of participants.oracles) {
-        try {
-            const tx = await traceability.grantRole(ORACLE_ROLE, oracle);
-            await tx.wait();
-            console.log("✅ Granted ORACLE_ROLE to:", oracle);
-        } catch (error) {
-            console.error("❌ Failed to grant ORACLE_ROLE to:", oracle);
-            console.error(error.message);
-        }
+        totalAttempts++;
+        const success = await grantRoleWithErrorHandling(ORACLE_ROLE, "ORACLE_ROLE", oracle);
+        if (success) successCount++;
     }
     
     console.log("\n--- Role Verification ---");
@@ -138,11 +140,25 @@ async function main() {
     console.log("Admin has PROCESSOR_ROLE:", adminHasProcessor ? "✅" : "❌");
     
     // Show current role holders (for verification)
-    console.log("\n--- Current Role Summary ---");
-    console.log("Admin (DEFAULT_ADMIN_ROLE + PROCESSOR_ROLE):", admin.address);
+    console.log("\n--- Role Assignment Summary ---");
+    if (totalAttempts === 0) {
+        console.log("ℹ️  No additional addresses configured for role assignment.");
+        console.log("ℹ️  To grant roles, edit the participants object in this script.");
+        console.log("ℹ️  Or use the Admin Panel in the frontend for individual role management.");
+    } else {
+        console.log(`📊 Roles granted: ${successCount}/${totalAttempts} successful`);
+    }
     
-    // In a production environment, you might want to create a more comprehensive
-    // role management interface or read participant addresses from a configuration file
+    console.log("\n--- Current Admin Setup ---");
+    console.log("Admin Address:", admin.address);
+    console.log("Has DEFAULT_ADMIN_ROLE: ✅");
+    console.log("Has PROCESSOR_ROLE: ✅");
+    
+    console.log("\n--- Alternative: Use Frontend Admin Panel ---");
+    console.log("1. Start the frontend: cd frontend && npm start");
+    console.log("2. Connect with the admin wallet");
+    console.log("3. Go to Admin Panel (/admin)");
+    console.log("4. Use 'Grant Role' button to assign roles to specific addresses");
     
     console.log("\n--- Next Steps ---");
     console.log("1. Verify all participant addresses are correct");

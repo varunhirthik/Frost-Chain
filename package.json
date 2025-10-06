@@ -12,6 +12,8 @@
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
     "verify": "hardhat verify",
     "clean": "hardhat clean",
+    "setup-roles": "hardhat run scripts/setup-roles.js --network localhost",
+    "grant-role": "hardhat run scripts/grant-single-role.js --network localhost",
     "frontend:install": "cd frontend && npm ci",
     "frontend:start": "cd frontend && npm start",
     "frontend:build": "cd frontend && npm run build"

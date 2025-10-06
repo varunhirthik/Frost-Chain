@@ -4,7 +4,7 @@ import { Container, Row, Col, Card, Table, Button, Badge, Alert, Form, Modal, Sp
 import { useNavigate } from 'react-router-dom';
 import { useBlockchain } from '../utils/BlockchainContext';
 import { useRole } from '../utils/RoleContext';
-import { grantRole, revokeRole, getAllBatches } from '../utils/blockchain-clean';
+import { grantRole, revokeRole, getAllBatches, getAdminInfo } from '../utils/blockchain-clean';
 import { toast } from 'react-toastify';
 
 /**
@@ -22,6 +22,7 @@ const AdminPanel = () => {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [roleAction, setRoleAction] = useState({ type: '', address: '', role: '' });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [adminInfo, setAdminInfo] = useState(null);
 
   // Role mappings
   const roles = {
@@ -34,6 +35,10 @@ const AdminPanel = () => {
   const loadAdminData = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // Load admin information
+      const adminData = await getAdminInfo(contract);
+      setAdminInfo(adminData);
       
       // Load all batches for overview
       const batches = await getAllBatches(contract);
@@ -88,11 +93,27 @@ const AdminPanel = () => {
         toast.success(`Role ${roleAction.type === 'grant' ? 'granted' : 'revoked'} successfully!`);
         setShowRoleModal(false);
         setRoleAction({ type: '', address: '', role: '' });
+        // Reload admin data to refresh the display
+        await loadAdminData();
       }
       
     } catch (error) {
       console.error('Error managing role:', error);
-      toast.error(`Failed to ${roleAction.type} role: ` + error.message);
+      
+      // Check for specific error types
+      if (error.message.includes('missing role 0x0000000000000000000000000000000000000000000000000000000000000000')) {
+        toast.error(
+          `❌ Access Denied: You need admin privileges to manage roles.\n\n` +
+          `Please connect with the deployer account:\n0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\n` +
+          `Current account: ${account}`
+        );
+      } else if (error.message.includes('User already has this role')) {
+        toast.warning('User already has this role');
+      } else if (error.message.includes('User does not have this role')) {
+        toast.warning('User does not have this role to revoke');
+      } else {
+        toast.error(`Failed to ${roleAction.type} role: ` + error.message);
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -153,6 +174,31 @@ const AdminPanel = () => {
           Back to Dashboard
         </Button>
       </div>
+
+      {/* Admin Status Alert */}
+      {adminInfo && (
+        <Alert variant={adminInfo.currentUserIsAdmin ? "success" : "warning"} className="mb-4">
+          <div className="d-flex align-items-center">
+            <div className="flex-grow-1">
+              {adminInfo.currentUserIsAdmin ? (
+                <>
+                  <Alert.Heading className="h6 mb-1">✅ Admin Access Granted</Alert.Heading>
+                  <small>You have admin privileges and can manage roles.</small>
+                </>
+              ) : (
+                <>
+                  <Alert.Heading className="h6 mb-1">⚠️ Limited Access</Alert.Heading>
+                  <small>
+                    <strong>Current account:</strong> {adminInfo.currentUser}<br/>
+                    <strong>Admin account:</strong> {adminInfo.deployer}<br/>
+                    <em>To manage roles, please connect with the deployer account in MetaMask.</em>
+                  </small>
+                </>
+              )}
+            </div>
+          </div>
+        </Alert>
+      )}
 
       {/* System Statistics */}
       <Row className="mb-4">
@@ -266,18 +312,23 @@ const AdminPanel = () => {
               <h5 className="mb-0">Role Management</h5>
             </Card.Header>
             <Card.Body>
+              {adminInfo && !adminInfo.currentUserIsAdmin && (
+                <Alert variant="info" className="mb-3">
+                  <small>Role management requires admin privileges. Please connect with the deployer account to manage roles.</small>
+                </Alert>
+              )}
               <div className="d-grid gap-2">
                 <Button
                   variant="success"
                   onClick={() => openRoleModal('grant')}
-                  disabled={isProcessing}
+                  disabled={isProcessing || (adminInfo && !adminInfo.currentUserIsAdmin)}
                 >
                   Grant Role
                 </Button>
                 <Button
                   variant="danger"
                   onClick={() => openRoleModal('revoke')}
-                  disabled={isProcessing}
+                  disabled={isProcessing || (adminInfo && !adminInfo.currentUserIsAdmin)}
                 >
                   Revoke Role
                 </Button>

@@ -404,14 +404,138 @@ export const updateTemperature = async () => {
   throw new Error('Update temperature not implemented yet');
 };
 
-export const grantRole = async () => {
-  console.log('👑 [ROLE] Grant role (placeholder)');
-  throw new Error('Grant role not implemented yet');
+export const grantRole = async (contract, roleKey, userAddress) => {
+  console.log('👑 [ROLE] Granting role:', roleKey, 'to:', userAddress);
+  
+  if (!contract) {
+    throw new Error('Contract instance is required');
+  }
+  
+  if (!userAddress || userAddress === '0x0000000000000000000000000000000000000000') {
+    throw new Error('Valid user address is required');
+  }
+  
+  try {
+    // First check if current user has admin role
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const currentAccount = await signer.getAddress();
+    
+    const hasAdminRole = await contract.hasRole(ROLES.ADMIN_ROLE, currentAccount);
+    console.log('👑 [ROLE] Current account has admin role:', hasAdminRole);
+    
+    if (!hasAdminRole) {
+      throw new Error(`Current account (${currentAccount}) does not have admin privileges. Please connect with the deployer account: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`);
+    }
+    
+    // Convert role key to proper role hash
+    let roleHash;
+    switch (roleKey) {
+      case 'ADMIN_ROLE':
+        roleHash = ROLES.ADMIN_ROLE;
+        break;
+      case 'PROCESSOR_ROLE':
+        roleHash = ROLES.PROCESSOR_ROLE;
+        break;
+      case 'DISTRIBUTOR_ROLE':
+        roleHash = ROLES.DISTRIBUTOR_ROLE;
+        break;
+      case 'RETAILER_ROLE':
+        roleHash = ROLES.RETAILER_ROLE;
+        break;
+      case 'ORACLE_ROLE':
+        roleHash = ROLES.ORACLE_ROLE;
+        break;
+      default:
+        throw new Error('Invalid role key: ' + roleKey);
+    }
+    
+    console.log('👑 [ROLE] Role hash:', roleHash);
+    
+    // Check if user already has the role
+    const hasRole = await contract.hasRole(roleHash, userAddress);
+    if (hasRole) {
+      throw new Error('User already has this role');
+    }
+    
+    // Grant the role
+    const tx = await contract.grantRole(roleHash, userAddress);
+    console.log('👑 [ROLE] Transaction sent:', tx.hash);
+    
+    // Wait for confirmation
+    const receipt = await tx.wait();
+    console.log('✅ [ROLE] Role granted successfully. Gas used:', receipt.gasUsed.toString());
+    
+    return {
+      success: true,
+      transactionHash: tx.hash,
+      gasUsed: receipt.gasUsed.toString()
+    };
+  } catch (error) {
+    console.error('❌ [ROLE] Failed to grant role:', error);
+    throw new Error('Failed to grant role: ' + error.message);
+  }
 };
 
-export const revokeRole = async () => {
-  console.log('🚫 [ROLE] Revoke role (placeholder)');
-  throw new Error('Revoke role not implemented yet');
+export const revokeRole = async (contract, roleKey, userAddress) => {
+  console.log('🚫 [ROLE] Revoking role:', roleKey, 'from:', userAddress);
+  
+  if (!contract) {
+    throw new Error('Contract instance is required');
+  }
+  
+  if (!userAddress || userAddress === '0x0000000000000000000000000000000000000000') {
+    throw new Error('Valid user address is required');
+  }
+  
+  try {
+    // Convert role key to proper role hash
+    let roleHash;
+    switch (roleKey) {
+      case 'ADMIN_ROLE':
+        roleHash = ROLES.ADMIN_ROLE;
+        break;
+      case 'PROCESSOR_ROLE':
+        roleHash = ROLES.PROCESSOR_ROLE;
+        break;
+      case 'DISTRIBUTOR_ROLE':
+        roleHash = ROLES.DISTRIBUTOR_ROLE;
+        break;
+      case 'RETAILER_ROLE':
+        roleHash = ROLES.RETAILER_ROLE;
+        break;
+      case 'ORACLE_ROLE':
+        roleHash = ROLES.ORACLE_ROLE;
+        break;
+      default:
+        throw new Error('Invalid role key: ' + roleKey);
+    }
+    
+    console.log('🚫 [ROLE] Role hash:', roleHash);
+    
+    // Check if user has the role
+    const hasRole = await contract.hasRole(roleHash, userAddress);
+    if (!hasRole) {
+      throw new Error('User does not have this role');
+    }
+    
+    // Revoke the role
+    const tx = await contract.revokeRole(roleHash, userAddress);
+    console.log('🚫 [ROLE] Transaction sent:', tx.hash);
+    
+    // Wait for confirmation
+    const receipt = await tx.wait();
+    console.log('✅ [ROLE] Role revoked successfully. Gas used:', receipt.gasUsed.toString());
+    
+    return {
+      success: true,
+      transactionHash: tx.hash,
+      gasUsed: receipt.gasUsed.toString()
+    };
+  } catch (error) {
+    console.error('❌ [ROLE] Failed to revoke role:', error);
+    throw new Error('Failed to revoke role: ' + error.message);
+  }
 };
 
 // Utility functions for Dashboard
@@ -453,6 +577,150 @@ export const getStatusBadgeClass = (status) => {
   };
   
   return classMap[status] || 'secondary';
+};
+
+// Additional role management functions
+export const checkUserRole = async (contract, roleKey, userAddress) => {
+  console.log('🔍 [ROLE] Checking if user has role:', roleKey, 'for:', userAddress);
+  
+  if (!contract || !userAddress) {
+    return false;
+  }
+  
+  try {
+    let roleHash;
+    switch (roleKey) {
+      case 'ADMIN_ROLE':
+        roleHash = ROLES.ADMIN_ROLE;
+        break;
+      case 'PROCESSOR_ROLE':
+        roleHash = ROLES.PROCESSOR_ROLE;
+        break;
+      case 'DISTRIBUTOR_ROLE':
+        roleHash = ROLES.DISTRIBUTOR_ROLE;
+        break;
+      case 'RETAILER_ROLE':
+        roleHash = ROLES.RETAILER_ROLE;
+        break;
+      case 'ORACLE_ROLE':
+        roleHash = ROLES.ORACLE_ROLE;
+        break;
+      default:
+        return false;
+    }
+    
+    const hasRole = await contract.hasRole(roleHash, userAddress);
+    console.log('🔍 [ROLE] User has role:', hasRole);
+    return hasRole;
+  } catch (error) {
+    console.error('❌ [ROLE] Error checking role:', error);
+    return false;
+  }
+};
+
+export const getAllUserRoles = async (contract, userAddress) => {
+  console.log('📋 [ROLE] Getting all roles for user:', userAddress);
+  
+  if (!contract || !userAddress) {
+    return {
+      isAdmin: false,
+      isProcessor: false,
+      isDistributor: false,
+      isRetailer: false,
+      isOracle: false,
+      hasAnyRole: false
+    };
+  }
+  
+  try {
+    const [isAdmin, isProcessor, isDistributor, isRetailer, isOracle] = await Promise.all([
+      contract.hasRole(ROLES.ADMIN_ROLE, userAddress),
+      contract.hasRole(ROLES.PROCESSOR_ROLE, userAddress),
+      contract.hasRole(ROLES.DISTRIBUTOR_ROLE, userAddress),
+      contract.hasRole(ROLES.RETAILER_ROLE, userAddress),
+      contract.hasRole(ROLES.ORACLE_ROLE, userAddress)
+    ]);
+    
+    const roles = {
+      isAdmin,
+      isProcessor,
+      isDistributor,
+      isRetailer,
+      isOracle,
+      hasAnyRole: isAdmin || isProcessor || isDistributor || isRetailer || isOracle
+    };
+    
+    console.log('📋 [ROLE] User roles:', roles);
+    return roles;
+  } catch (error) {
+    console.error('❌ [ROLE] Error getting user roles:', error);
+    return {
+      isAdmin: false,
+      isProcessor: false,
+      isDistributor: false,
+      isRetailer: false,
+      isOracle: false,
+      hasAnyRole: false
+    };
+  }
+};
+
+export const getAdminInfo = async (contract) => {
+  console.log('👑 [ADMIN] Getting admin account information...');
+  
+  if (!contract) {
+    return { deployer: null, currentUserIsAdmin: false };
+  }
+  
+  try {
+    // Get current user
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const currentAccount = await signer.getAddress();
+    
+    // Check if current user is admin
+    const currentUserIsAdmin = await contract.hasRole(ROLES.ADMIN_ROLE, currentAccount);
+    
+    // The deployer is typically the first admin (from deployment file)
+    const deployerAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+    
+    return {
+      deployer: deployerAddress,
+      currentUser: currentAccount,
+      currentUserIsAdmin,
+      deployerIsAdmin: await contract.hasRole(ROLES.ADMIN_ROLE, deployerAddress)
+    };
+  } catch (error) {
+    console.error('❌ [ADMIN] Error getting admin info:', error);
+    return { deployer: null, currentUserIsAdmin: false };
+  }
+};
+
+export const grantMultipleRoles = async (contract, userAddress, roleKeys) => {
+  console.log('👑 [ROLE] Granting multiple roles:', roleKeys, 'to:', userAddress);
+  
+  if (!contract || !userAddress || !Array.isArray(roleKeys)) {
+    throw new Error('Contract, user address, and role keys array are required');
+  }
+  
+  try {
+    const results = [];
+    
+    for (const roleKey of roleKeys) {
+      try {
+        const result = await grantRole(contract, roleKey, userAddress);
+        results.push({ roleKey, success: true, result });
+      } catch (error) {
+        results.push({ roleKey, success: false, error: error.message });
+      }
+    }
+    
+    console.log('👑 [ROLE] Multiple roles grant results:', results);
+    return results;
+  } catch (error) {
+    console.error('❌ [ROLE] Error granting multiple roles:', error);
+    throw error;
+  }
 };
 
 console.log('✅ [BLOCKCHAIN] Clean blockchain module loaded successfully');

@@ -3,7 +3,7 @@
   "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
   "network": "localhost",
   "blockNumber": 2,
-  "timestamp": "2025-10-05T14:16:21.991Z",
+  "timestamp": "2025-10-06T02:59:13.121Z",
   "gasUsed": "2057905",
-  "deploymentCost": "0.001606603035898845"
+  "deploymentCost": "0.001606463530518895"
 }
